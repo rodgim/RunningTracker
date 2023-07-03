@@ -2,6 +2,8 @@ package com.rodgim.runningtracker.di
 
 import android.content.Context
 import androidx.room.Room
+import com.rodgim.runningtracker.data.datasources.LocalMainDataSource
+import com.rodgim.runningtracker.data.datasources.RoomLocalMainDataSource
 import com.rodgim.runningtracker.data.db.RunDao
 import com.rodgim.runningtracker.data.db.RunningDatabase
 import dagger.Module
@@ -30,4 +32,8 @@ object RoomModule {
     fun provideRunDao(
         runningDatabase: RunningDatabase
     ): RunDao = runningDatabase.getRunDao()
+
+    @Singleton
+    @Provides
+    fun provideLocalMainDataSource(runDao: RunDao): LocalMainDataSource = RoomLocalMainDataSource(runDao)
 }
