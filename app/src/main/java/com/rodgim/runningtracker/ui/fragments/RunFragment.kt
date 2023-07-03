@@ -6,6 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
+import com.rodgim.runningtracker.R
 import com.rodgim.runningtracker.databinding.FragmentRunBinding
 import com.rodgim.runningtracker.ui.viewmodels.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -23,5 +25,13 @@ class RunFragment : Fragment() {
     ): View? {
         binding = FragmentRunBinding.inflate(inflater, container, false)
         return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        binding.fab.setOnClickListener {
+            findNavController().navigate(R.id.action_runFragment_to_trackingFragment)
+        }
     }
 }

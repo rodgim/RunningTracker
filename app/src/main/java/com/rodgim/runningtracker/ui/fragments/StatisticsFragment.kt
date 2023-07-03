@@ -6,14 +6,14 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import com.rodgim.runningtracker.databinding.FragmentSettingsBinding
+import com.rodgim.runningtracker.databinding.FragmentStatisticsBinding
 import com.rodgim.runningtracker.ui.viewmodels.StatisticsViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class StatisticsFragment : Fragment() {
 
-    private lateinit var binding: FragmentSettingsBinding
+    private lateinit var binding: FragmentStatisticsBinding
     private val viewModel: StatisticsViewModel by viewModels()
 
     override fun onCreateView(
@@ -21,7 +21,7 @@ class StatisticsFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        binding = FragmentSettingsBinding.inflate(inflater, container, false)
+        binding = FragmentStatisticsBinding.inflate(inflater, container, false)
         return binding.root
     }
 }
