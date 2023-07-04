@@ -6,6 +6,7 @@ import com.rodgim.runningtracker.data.datasources.LocalMainDataSource
 import com.rodgim.runningtracker.data.datasources.RoomLocalMainDataSource
 import com.rodgim.runningtracker.data.db.RunDao
 import com.rodgim.runningtracker.data.db.RunningDatabase
+import com.rodgim.runningtracker.utils.Constants
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
