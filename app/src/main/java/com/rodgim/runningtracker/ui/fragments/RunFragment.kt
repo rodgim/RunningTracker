@@ -105,7 +105,7 @@ class RunFragment : Fragment() {
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            if (fineLocationPermissionGranted || coarseLocationPermissionGranted) {
+            if (fineLocationPermissionGranted) {
                 val hasBackgroundLocationPermission = ContextCompat.checkSelfPermission(
                     requireContext(),
                     Manifest.permission.ACCESS_BACKGROUND_LOCATION

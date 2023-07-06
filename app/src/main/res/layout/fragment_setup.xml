@@ -62,7 +62,7 @@
         android:text="@string/kg"
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="@+id/tilWeight"
-        app:layout_constraintLeft_toRightOf="@id/tilWeight"
+        app:layout_constraintStart_toEndOf="@id/tilWeight"
         app:layout_constraintTop_toTopOf="@+id/tilWeight" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
