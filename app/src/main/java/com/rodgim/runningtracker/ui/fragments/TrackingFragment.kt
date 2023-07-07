@@ -22,7 +22,9 @@ import com.rodgim.runningtracker.utils.Constants.ACTION_START_OR_RESUME_SERVICE
 import com.rodgim.runningtracker.utils.Constants.MAP_ZOOM
 import com.rodgim.runningtracker.utils.Constants.POLYLINE_COLOR
 import com.rodgim.runningtracker.utils.Constants.POLYLINE_WIDTH
+import com.rodgim.runningtracker.utils.TrackingUtility
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -36,6 +38,8 @@ class TrackingFragment : Fragment() {
     private var pathPoints = listOf<Polyline>()
 
     private var map: GoogleMap? = null
+
+    private var curTimeInMillis = 0L
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -77,6 +81,16 @@ class TrackingFragment : Fragment() {
                     pathPoints = it
                     addLatestPolyline()
                     moveCameraToUser()
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.CREATED) {
+                TrackingService.timeRunInMillis.collect {
+                    curTimeInMillis = it
+                    val formattedTime = TrackingUtility.getFormattedStopWatchTime(curTimeInMillis, true)
+                    binding.tvTimer.text = formattedTime
                 }
             }
         }

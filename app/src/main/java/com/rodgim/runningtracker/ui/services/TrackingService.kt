@@ -31,7 +31,10 @@ import com.rodgim.runningtracker.utils.Constants.LOCATION_UPDATE_INTERVAL
 import com.rodgim.runningtracker.utils.Constants.NOTIFICATION_CHANNEL_ID
 import com.rodgim.runningtracker.utils.Constants.NOTIFICATION_CHANNEL_NAME
 import com.rodgim.runningtracker.utils.Constants.NOTIFICATION_ID
+import com.rodgim.runningtracker.utils.Constants.TIMER_UPDATE_INTERVAL
 import com.rodgim.runningtracker.utils.TrackingUtility
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -45,7 +48,15 @@ class TrackingService : LifecycleService() {
 
     lateinit var fusedLocationProviderClient: FusedLocationProviderClient
 
+    private val timeRunInSeconds = MutableStateFlow(0L)
+    private var isTimerEnabled = false
+    private var lapTime = 0L
+    private var timeRun = 0L
+    private var timeStarted = 0L
+    private var lastSecondTimestamp = 0L
+
     companion object {
+        val timeRunInMillis = MutableStateFlow(0L)
         val isTracking = MutableStateFlow(false)
         val pathPoints = MutableStateFlow<Polylines>(listOf())
     }
@@ -53,6 +64,8 @@ class TrackingService : LifecycleService() {
     private fun postInitialValues() {
         isTracking.value = false
         pathPoints.value = listOf()
+        timeRunInSeconds.value = 0L
+        timeRunInMillis.value = 0L
     }
 
     override fun onCreate() {
@@ -76,7 +89,7 @@ class TrackingService : LifecycleService() {
                         isFirstRun = false
                         Timber.d("Tracking service start")
                     } else {
-                        startForegroundService()
+                        startTimer()
                         Timber.d("Tracking service resumed")
                     }
                 }
@@ -92,8 +105,28 @@ class TrackingService : LifecycleService() {
         return super.onStartCommand(intent, flags, startId)
     }
 
+    private fun startTimer() {
+        addEmptyPolyline()
+        isTracking.value = true
+        timeStarted = System.currentTimeMillis()
+        isTimerEnabled = true
+        lifecycleScope.launch(Dispatchers.Main) {
+            while (isTracking.value) {
+                lapTime = System.currentTimeMillis() - timeStarted
+                timeRunInMillis.value = timeRun + lapTime
+                if (timeRunInMillis.value >= lastSecondTimestamp + 1000L) {
+                    timeRunInSeconds.value = timeRunInSeconds.value + 1
+                    lastSecondTimestamp += 1000L
+                }
+                delay(TIMER_UPDATE_INTERVAL)
+            }
+            timeRun += lapTime
+        }
+    }
+
     private fun pauseService() {
         isTracking.value = false
+        isTimerEnabled = false
     }
 
     @SuppressLint("MissingPermission")
@@ -146,7 +179,7 @@ class TrackingService : LifecycleService() {
     }
 
     private fun startForegroundService() {
-        addEmptyPolyline()
+        startTimer()
         isTracking.value = true
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
