@@ -12,11 +12,8 @@ import android.os.Build
 import android.os.Looper
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
-import com.google.android.gms.location.FusedLocationProviderApi
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -39,8 +36,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-typealias Polyline = MutableList<LatLng>
-typealias Polylines = MutableList<Polyline>
+typealias Polyline = List<LatLng>
+typealias Polylines = List<Polyline>
 
 class TrackingService : LifecycleService() {
 
@@ -50,12 +47,12 @@ class TrackingService : LifecycleService() {
 
     companion object {
         val isTracking = MutableStateFlow(false)
-        val pathPoints = MutableStateFlow<Polylines>(mutableListOf())
+        val pathPoints = MutableStateFlow<Polylines>(listOf())
     }
 
     private fun postInitialValues() {
         isTracking.value = false
-        pathPoints.value = mutableListOf()
+        pathPoints.value = listOf()
     }
 
     override fun onCreate() {
@@ -77,12 +74,15 @@ class TrackingService : LifecycleService() {
                     if (isFirstRun) {
                         startForegroundService()
                         isFirstRun = false
+                        Timber.d("Tracking service start")
                     } else {
-                        Timber.d("Tracking serviceresumed")
+                        startForegroundService()
+                        Timber.d("Tracking service resumed")
                     }
                 }
                 ACTION_PAUSE_SERVICE -> {
                     Timber.d("Tracking service paused")
+                    pauseService()
                 }
                 ACTION_STOP_SERVICE -> {
                     Timber.d("Tracking service stopped")
@@ -90,6 +90,10 @@ class TrackingService : LifecycleService() {
             }
         }
         return super.onStartCommand(intent, flags, startId)
+    }
+
+    private fun pauseService() {
+        isTracking.value = false
     }
 
     @SuppressLint("MissingPermission")
@@ -125,15 +129,20 @@ class TrackingService : LifecycleService() {
         location?.let {
             val pos = LatLng(it.latitude, it.longitude)
             pathPoints.value.apply {
-                last().add(pos)
-                pathPoints.value = this
+                val polylines = this.toMutableList()
+                val polyline = polylines.last().toMutableList()
+                polyline.add(pos)
+                polylines.removeLast()
+                polylines.add(polyline)
+                pathPoints.value = polylines.toList()
             }
         }
     }
 
     private fun addEmptyPolyline() = pathPoints.value.apply {
-        add(mutableListOf())
-        pathPoints.value = this
+        val polylines = this.toMutableList()
+        polylines.add(mutableListOf())
+        pathPoints.value = polylines.toList()
     }
 
     private fun startForegroundService() {
