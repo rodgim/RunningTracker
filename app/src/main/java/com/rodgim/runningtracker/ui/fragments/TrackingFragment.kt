@@ -1,10 +1,18 @@
 package com.rodgim.runningtracker.ui.fragments
 
+import android.Manifest
 import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -24,7 +32,6 @@ import com.rodgim.runningtracker.utils.Constants.POLYLINE_COLOR
 import com.rodgim.runningtracker.utils.Constants.POLYLINE_WIDTH
 import com.rodgim.runningtracker.utils.TrackingUtility
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -40,6 +47,8 @@ class TrackingFragment : Fragment() {
     private var map: GoogleMap? = null
 
     private var curTimeInMillis = 0L
+    private lateinit var permissionsLauncher: ActivityResultLauncher<String>
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -58,7 +67,15 @@ class TrackingFragment : Fragment() {
             addAllPolylines()
         }
         binding.btnToggleRun.setOnClickListener {
-            toggleRun()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (TrackingUtility.hasPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS)) {
+                    toggleRun()
+                } else {
+                    requestNotificationPermission()
+                }
+            } else {
+                toggleRun()
+            }
         }
 
         subscribeToTrackingService()
@@ -190,5 +207,46 @@ class TrackingFragment : Fragment() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         binding.mapView.onSaveInstanceState(outState)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun requestNotificationPermission() {
+        permissionsLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+            if (!it) {
+                if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
+                    showRequestPermissionRationaleDialog("This notification permission is necessary for the correct functioning of the app.")
+                } else {
+                    showPermissionPermanentlyDeniedDialog("This notification permission is necessary for the correct functioning of the app.")
+                }
+            }
+        }
+
+        permissionsLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun showRequestPermissionRationaleDialog(description: String) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Permission request")
+            .setMessage(description)
+            .setPositiveButton("Ok", null)
+            .setOnDismissListener {
+                requestNotificationPermission()
+            }
+            .show()
+    }
+
+    private fun showPermissionPermanentlyDeniedDialog(description: String) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Permission request")
+            .setMessage(description)
+            .setPositiveButton("Go to Settings"
+            ) { _, _ ->
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.fromParts("package", activity?.packageName, null)
+                    startActivity(this)
+                }
+            }
+            .show()
     }
 }
