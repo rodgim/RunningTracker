@@ -16,11 +16,17 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.rodgim.runningtracker.R
 import com.rodgim.runningtracker.databinding.FragmentRunBinding
+import com.rodgim.runningtracker.ui.adapters.RunAdapter
 import com.rodgim.runningtracker.ui.viewmodels.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class RunFragment : Fragment() {
@@ -31,6 +37,8 @@ class RunFragment : Fragment() {
     private lateinit var permissionsLauncher: ActivityResultLauncher<Array<String>>
     private var fineLocationPermissionGranted = false
     private var coarseLocationPermissionGranted = false
+
+    private lateinit var runAdapter: RunAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -49,6 +57,23 @@ class RunFragment : Fragment() {
         }
 
         setupLocationPermissions()
+        setupRecyclerView()
+        subscribeToObservers()
+    }
+
+    private fun setupRecyclerView() = binding.rvRuns.apply {
+        runAdapter = RunAdapter()
+        adapter = runAdapter
+    }
+
+    private fun subscribeToObservers() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.runsSortedByDate.collect {
+                    runAdapter.submitList(it)
+                }
+            }
+        }
     }
 
     private fun setupLocationPermissions() {

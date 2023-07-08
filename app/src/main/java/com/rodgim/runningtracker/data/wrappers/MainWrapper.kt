@@ -4,7 +4,7 @@ import com.rodgim.runningtracker.domain.models.Run
 import com.rodgim.runningtracker.data.db.models.Run as RunEntity
 
 fun Run.toRunEntity(): RunEntity = RunEntity(
-    id = id,
+    id = id ?: 0,
     img = img,
     timestamp = timestamp,
     avgSpeedInKMH = avgSpeedInKMH,
