@@ -12,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.AdapterView.OnItemSelectedListener
+import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -24,11 +25,11 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.rodgim.runningtracker.R
 import com.rodgim.runningtracker.databinding.FragmentRunBinding
+import com.rodgim.runningtracker.ui.MainActivity
 import com.rodgim.runningtracker.ui.adapters.RunAdapter
 import com.rodgim.runningtracker.ui.viewmodels.MainViewModel
 import com.rodgim.runningtracker.utils.SortType
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -104,6 +105,15 @@ class RunFragment : Fragment() {
             viewLifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.runs.collect {
                     runAdapter.submitList(it)
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.name.collect {
+                    val toolbarText = "Let's go, $it"
+                    (requireActivity() as MainActivity).findViewById<TextView>(R.id.tvToolbarTitle).text = toolbarText
                 }
             }
         }

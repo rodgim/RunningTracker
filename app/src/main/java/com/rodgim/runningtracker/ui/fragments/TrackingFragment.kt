@@ -65,7 +65,7 @@ class TrackingFragment : Fragment() {
 
     private var menu: Menu? = null
 
-    private var weight = 80f
+    private var weight = 0f
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -131,6 +131,14 @@ class TrackingFragment : Fragment() {
                     curTimeInMillis = it
                     val formattedTime = TrackingUtility.getFormattedStopWatchTime(curTimeInMillis, true)
                     binding.tvTimer.text = formattedTime
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.CREATED) {
+                viewModel.weight.collect {
+                    weight = it
                 }
             }
         }
