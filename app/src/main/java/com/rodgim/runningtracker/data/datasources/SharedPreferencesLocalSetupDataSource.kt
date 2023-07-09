@@ -23,6 +23,15 @@ class SharedPreferencesLocalSetupDataSource @Inject constructor(
         }
     }
 
+    override suspend fun updateSetup(name: String, weight: Float) {
+        withContext(Dispatchers.IO) {
+            sharedPreferences.edit()
+                .putString(KEY_NAME, name)
+                .putFloat(KEY_WEIGHT, weight)
+                .apply()
+        }
+    }
+
     override suspend fun getName(): String {
         return withContext(Dispatchers.IO) {
             sharedPreferences.getString(KEY_NAME, "") ?: ""

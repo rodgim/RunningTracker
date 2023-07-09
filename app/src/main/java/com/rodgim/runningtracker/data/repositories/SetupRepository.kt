@@ -9,6 +9,8 @@ class SetupRepository @Inject constructor(
     suspend fun saveSetup(name: String, weight: Float, firstTimeToggle: Boolean) =
         localSetupDataSource.saveSetup(name, weight, firstTimeToggle)
 
+    suspend fun updateSetup(name: String, weight: Float) = localSetupDataSource.updateSetup(name, weight)
+
     suspend fun getName() = localSetupDataSource.getName()
 
     suspend fun getWeight() = localSetupDataSource.getWeight()
