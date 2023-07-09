@@ -28,11 +28,11 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.PolylineOptions
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.rodgim.runningtracker.R
 import com.rodgim.runningtracker.databinding.FragmentTrackingBinding
 import com.rodgim.runningtracker.domain.models.Run
+import com.rodgim.runningtracker.ui.dialogs.CancelTrackingDialog
 import com.rodgim.runningtracker.ui.services.Polyline
 import com.rodgim.runningtracker.ui.services.TrackingService
 import com.rodgim.runningtracker.ui.viewmodels.MainViewModel
@@ -98,6 +98,13 @@ class TrackingFragment : Fragment() {
         binding.btnFinishRun.setOnClickListener {
             zoomToSeeTheFullTrack()
             endRunAndSaveToDb()
+        }
+
+        savedInstanceState?.let { savedBundle->
+            val cancelTrackingDialog = parentFragmentManager.findFragmentByTag(CancelTrackingDialog.TAG) as CancelTrackingDialog?
+            cancelTrackingDialog?.setOnButtonClickListener {
+                stopRun()
+            }
         }
 
         subscribeToTrackingService()
@@ -354,17 +361,11 @@ class TrackingFragment : Fragment() {
     }
 
     private fun showCancelTrackingDialog() {
-        MaterialAlertDialogBuilder(requireContext(), R.style.AlertDialogTheme)
-            .setTitle("Cancel the Run?")
-            .setMessage("Are you sure to cancel the current run and delete all its data?")
-            .setIcon(R.drawable.ic_delete)
-            .setPositiveButton("Yes") { _, _ ->
+        CancelTrackingDialog().apply {
+            setOnButtonClickListener {
                 stopRun()
             }
-            .setNegativeButton("No") { dialogInterface, _ ->
-                dialogInterface.dismiss()
-            }
-            .show()
+        }.show(parentFragmentManager, CancelTrackingDialog.TAG)
     }
 
     private fun stopRun() {
