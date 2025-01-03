@@ -1,19 +1,19 @@
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("kotlin-kapt")
-    id("com.google.dagger.hilt.android")
-    id("androidx.navigation.safeargs.kotlin")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt.android)
+    alias(libs.plugins.navigation.safeargs)
 }
 
 android {
     namespace = "com.rodgim.runningtracker"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.rodgim.runningtracker"
         minSdk = 24
-        targetSdk = 33
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -44,41 +44,41 @@ android {
 
 dependencies {
 
-    implementation("androidx.core:core-ktx:1.8.0")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.9.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation(libs.androidx.ktx)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.material)
+    implementation(libs.androidx.constraintlayout)
 
-    implementation("androidx.fragment:fragment-ktx:1.6.0")
-    implementation("androidx.activity:activity-ktx:1.7.2")
-    implementation("androidx.lifecycle:lifecycle-service:2.6.1")
+    implementation(libs.androidx.fragment.ktx)
+    implementation(libs.androidx.activity.ktx)
+    implementation(libs.androidx.lifecycle.service)
 
     // Room
-    implementation("androidx.room:room-ktx:2.5.2")
-    kapt("androidx.room:room-compiler:2.5.2")
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 
     // Hilt
-    implementation("com.google.dagger:hilt-android:2.46.1")
-    kapt("com.google.dagger:hilt-android-compiler:2.46.1")
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.android.compiler)
 
     // Navigation Components
-    implementation("androidx.navigation:navigation-fragment-ktx:2.6.0")
-    implementation("androidx.navigation:navigation-ui-ktx:2.6.0")
+    implementation(libs.androidx.navigation.fragment.ktx)
+    implementation(libs.androidx.navigation.ui.ktx)
 
     // Glide
-    implementation("com.github.bumptech.glide:glide:4.13.0")
-    kapt("com.github.bumptech.glide:compiler:4.13.0")
+    implementation(libs.glide)
+    ksp(libs.glide.compiler)
 
-    implementation("com.google.android.gms:play-services-location:21.0.1")
-    implementation("com.google.android.gms:play-services-maps:18.1.0")
+    implementation(libs.play.services.location)
+    implementation(libs.play.services.maps)
 
     // Timber
-    implementation("com.jakewharton.timber:timber:5.0.1")
+    implementation(libs.timber)
 
     // MPAndroidChart
-    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+    implementation(libs.mpandroidchart)
 
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
 }
