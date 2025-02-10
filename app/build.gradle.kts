@@ -78,6 +78,9 @@ dependencies {
     // MPAndroidChart
     implementation(libs.mpandroidchart)
 
+    // Mapbox
+    implementation(libs.mapbox)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

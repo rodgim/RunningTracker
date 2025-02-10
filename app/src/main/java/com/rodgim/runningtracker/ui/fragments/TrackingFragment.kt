@@ -24,11 +24,18 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.model.LatLngBounds
-import com.google.android.gms.maps.model.PolylineOptions
 import com.google.android.material.snackbar.Snackbar
+import com.mapbox.geojson.Point
+import com.mapbox.maps.CameraOptions
+import com.mapbox.maps.EdgeInsets
+import com.mapbox.maps.MapboxMap
+import com.mapbox.maps.Style
+import com.mapbox.maps.dsl.cameraOptions
+import com.mapbox.maps.plugin.animation.MapAnimationOptions
+import com.mapbox.maps.plugin.animation.easeTo
+import com.mapbox.maps.plugin.annotation.annotations
+import com.mapbox.maps.plugin.annotation.generated.PolylineAnnotationOptions
+import com.mapbox.maps.plugin.annotation.generated.createPolylineAnnotationManager
 import com.rodgim.runningtracker.R
 import com.rodgim.runningtracker.databinding.FragmentTrackingBinding
 import com.rodgim.runningtracker.domain.models.Run
@@ -58,7 +65,7 @@ class TrackingFragment : Fragment() {
     private var isTracking = false
     private var pathPoints = listOf<Polyline>()
 
-    private var map: GoogleMap? = null
+    private var map: MapboxMap? = null
 
     private var curTimeInMillis = 0L
     private lateinit var permissionsLauncher: ActivityResultLauncher<String>
@@ -78,11 +85,11 @@ class TrackingFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding.mapView.onCreate(savedInstanceState)
-        binding.mapView.getMapAsync {
-            map = it
+        map = binding.mapView.mapboxMap
+        map?.loadStyle(Style.MAPBOX_STREETS) {
             addAllPolylines()
         }
+
         binding.btnToggleRun.setOnClickListener {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 if (TrackingUtility.hasPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS)) {
@@ -174,35 +181,37 @@ class TrackingFragment : Fragment() {
 
     private fun moveCameraToUser() {
         if (pathPoints.isNotEmpty() && pathPoints.last().isNotEmpty()) {
-            map?.animateCamera(
-                CameraUpdateFactory.newLatLngZoom(
-                    pathPoints.last().last(),
-                    MAP_ZOOM
-                )
+            val point = pathPoints.last().last()
+            map?.easeTo(
+                CameraOptions.Builder()
+                    .center(Point.fromLngLat(point.longitude, point.latitude))
+                    .zoom(MAP_ZOOM.toDouble())
+                    .build(),
+                MapAnimationOptions.mapAnimationOptions {
+                    duration(1000)
+                }
             )
         }
     }
 
     private fun zoomToSeeTheFullTrack() {
-        val bounds = LatLngBounds.Builder()
-        for (polyline in pathPoints) {
-            for (pos in polyline) {
-                bounds.include(pos)
-            }
+        val bounds = pathPoints.flatten().map {
+            Point.fromLngLat(it.longitude, it.latitude)
         }
-
-        map?.moveCamera(
-            CameraUpdateFactory.newLatLngBounds(
-                bounds.build(),
-                binding.mapView.width,
-                binding.mapView.height,
-                (binding.mapView.height * 0.05f).toInt()
-            )
-        )
+        val padding = (binding.mapView.height * 0.05f).toInt()
+        map?.cameraForCoordinates(
+            coordinates = bounds,
+            camera = cameraOptions {  },
+            coordinatesPadding = EdgeInsets(padding.toDouble(), 0.0, padding.toDouble(), 0.0),
+            maxZoom = null,
+            offset = null,
+        ) {
+            map?.easeTo(it, MapAnimationOptions.mapAnimationOptions { duration(1000) })
+        }
     }
 
     private fun endRunAndSaveToDb() {
-        map?.snapshot { bmp ->
+        binding.mapView.snapshot { bmp ->
             var distanceInMeters = 0
             for (polyline in pathPoints) {
                 distanceInMeters += TrackingUtility.calculatePolylineLength(polyline).toInt()
@@ -229,13 +238,13 @@ class TrackingFragment : Fragment() {
     }
 
     private fun addAllPolylines() {
-        for (polyline in pathPoints) {
-            val polylineOptions = PolylineOptions()
-                .color(POLYLINE_COLOR)
-                .width(POLYLINE_WIDTH)
-                .addAll(polyline)
-            map?.addPolyline(polylineOptions)
-        }
+        val annotationManager = binding.mapView.annotations.createPolylineAnnotationManager()
+        annotationManager.create(
+            PolylineAnnotationOptions()
+                .withPoints(pathPoints.flatten().map { Point.fromLngLat(it.longitude, it.latitude) })
+                .withLineColor(POLYLINE_COLOR)
+                .withLineWidth(POLYLINE_WIDTH.toDouble())
+        )
     }
 
     private fun addLatestPolyline() {
@@ -243,12 +252,15 @@ class TrackingFragment : Fragment() {
             Timber.d("LAST SIZE=${pathPoints.last().size}")
             val preLastLatLng = pathPoints.last()[pathPoints.last().size - 2]
             val lastLatLng = pathPoints.last().last()
-            val polylineOptions = PolylineOptions()
-                .color(POLYLINE_COLOR)
-                .width(POLYLINE_WIDTH)
-                .add(preLastLatLng)
-                .add(lastLatLng)
-            map?.addPolyline(polylineOptions)
+            val preLastPoint = Point.fromLngLat(preLastLatLng.longitude, preLastLatLng.latitude)
+            val lastPoint = Point.fromLngLat(lastLatLng.longitude, lastLatLng.latitude)
+            val annotationManager = binding.mapView.annotations.createPolylineAnnotationManager()
+            annotationManager.create(
+                PolylineAnnotationOptions()
+                    .withPoints(listOf(preLastPoint, lastPoint))
+                    .withLineColor(POLYLINE_COLOR)
+                    .withLineWidth(POLYLINE_WIDTH.toDouble())
+            )
         }
     }
 
@@ -257,41 +269,6 @@ class TrackingFragment : Fragment() {
             it.action = action
             requireContext().startService(it)
         }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        binding.mapView.onStart()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        binding.mapView.onResume()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        binding.mapView.onPause()
-    }
-
-    override fun onStop() {
-        super.onStop()
-        binding.mapView.onStop()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        binding.mapView.onDestroy()
-    }
-
-    override fun onLowMemory() {
-        super.onLowMemory()
-        binding.mapView.onLowMemory()
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        binding.mapView.onSaveInstanceState(outState)
     }
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)

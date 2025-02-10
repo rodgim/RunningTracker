@@ -206,7 +206,7 @@ class TrackingService : LifecycleService() {
                 val polylines = this.toMutableList()
                 val polyline = polylines.last().toMutableList()
                 polyline.add(pos)
-                polylines.removeLast()
+                polylines.removeAt(polylines.lastIndex)
                 polylines.add(polyline)
                 pathPoints.value = polylines.toList()
             }
