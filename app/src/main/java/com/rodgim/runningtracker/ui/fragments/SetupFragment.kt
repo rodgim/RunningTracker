@@ -1,5 +1,8 @@
 package com.rodgim.runningtracker.ui.fragments
 
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.content.pm.ResolveInfo
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -87,6 +90,8 @@ class SetupFragment : Fragment() {
                 Snackbar.make(requireView(), "Please enter all the fields", Snackbar.LENGTH_SHORT).show()
             }
         }
+
+        checkIfCameraIntentCanBeResolved()
     }
 
     private fun savePersonalData(): Boolean {
@@ -120,5 +125,31 @@ class SetupFragment : Fragment() {
                 binding.ivProfilePhoto.tag = null
             }
         }
+    }
+
+    private fun checkIfCameraIntentCanBeResolved() {
+        val photoname = "IMG_${Date()}.JPG"
+        val photoFile = File(requireContext().applicationContext.filesDir, photoname)
+        val photoUriExample = FileProvider.getUriForFile(
+            requireContext(),
+            FILE_PROVIDER,
+            photoFile
+        )
+
+        val captureImageIntent = takePhoto.contract.createIntent(
+            requireContext(),
+            photoUriExample
+        )
+        binding.btnProfilePhoto.isEnabled = canResolveIntent(captureImageIntent)
+    }
+
+    private fun canResolveIntent(intent: Intent): Boolean {
+        val packageManager: PackageManager = requireActivity().packageManager
+        val resolveActivity: ResolveInfo? =
+            packageManager.resolveActivity(
+                intent,
+                PackageManager.MATCH_DEFAULT_ONLY
+            )
+        return resolveActivity != null
     }
 }
