@@ -4,6 +4,9 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.FileProvider
+import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -15,14 +18,27 @@ import com.google.android.material.snackbar.Snackbar
 import com.rodgim.runningtracker.R
 import com.rodgim.runningtracker.databinding.FragmentSetupBinding
 import com.rodgim.runningtracker.ui.viewmodels.SetupViewModel
+import com.rodgim.runningtracker.utils.Constants.FILE_PROVIDER
+import com.rodgim.runningtracker.utils.PictureUtils
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import java.io.File
+import java.util.Date
 
 @AndroidEntryPoint
 class SetupFragment : Fragment() {
 
     private lateinit var binding: FragmentSetupBinding
     private val viewModel: SetupViewModel by viewModels()
+
+    private var photoName: String = ""
+    private val takePhoto = registerForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ) { didTakePhoto ->
+        if (didTakePhoto && photoName.isNotEmpty()) {
+            updatePhoto(photoName)
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -52,6 +68,17 @@ class SetupFragment : Fragment() {
             }
         }
 
+        binding.btnProfilePhoto.setOnClickListener {
+            photoName = "IMG_${Date()}.JPG"
+            val photoFile = File(requireContext().applicationContext.filesDir, photoName)
+            val photoUri = FileProvider.getUriForFile(
+                requireContext(),
+                FILE_PROVIDER,
+                photoFile
+            )
+            takePhoto.launch(photoUri)
+        }
+
         binding.tvContinue.setOnClickListener {
             val success = savePersonalData()
             if (success) {
@@ -68,7 +95,30 @@ class SetupFragment : Fragment() {
         if (name.isEmpty() || weight.isEmpty()) {
             return false
         }
-        viewModel.saveSetup(name, weight.toFloat(), false)
+        viewModel.saveSetup(name, weight.toFloat(), false, photoName)
         return true
+    }
+
+    private fun updatePhoto(photoFileName: String?) {
+        if (binding.ivProfilePhoto.tag != photoFileName) {
+            val photoFile = photoFileName?.let {
+                File(requireContext().applicationContext.filesDir, it)
+            }
+
+            if (photoFile?.exists() == true) {
+                binding.ivProfilePhoto.doOnLayout { measureView ->
+                    val scaleBitmap = PictureUtils.getScaleBitmap(
+                        photoFile.path,
+                        measureView.width,
+                        measureView.height
+                    )
+                    binding.ivProfilePhoto.setImageBitmap(scaleBitmap)
+                    binding.ivProfilePhoto.tag = photoFileName
+                }
+            } else {
+                binding.ivProfilePhoto.setImageBitmap(null)
+                binding.ivProfilePhoto.tag = null
+            }
+        }
     }
 }

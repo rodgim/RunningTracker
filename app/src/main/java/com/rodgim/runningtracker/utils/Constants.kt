@@ -1,9 +1,11 @@
 package com.rodgim.runningtracker.utils
 
 import android.graphics.Color
+import java.io.File
 
 object Constants {
     const val RUNNING_DATABASE_NAME = "running_db.db"
+    const val FILE_PROVIDER = "com.rodgim.runningtracker.fileprovider"
 
     const val ACTION_START_OR_RESUME_SERVICE = "ACTION_START_OR_RESUME_SERVICE"
     const val ACTION_PAUSE_SERVICE = "ACTION_PAUSE_SERVICE"

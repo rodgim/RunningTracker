@@ -20,6 +20,9 @@ class SettingsViewModel @Inject constructor(
     private val _weight = MutableStateFlow(0f)
     val weight = _weight.asStateFlow()
 
+    private val _photo = MutableStateFlow("")
+    val photo = _photo.asStateFlow()
+
     init {
         viewModelScope.launch {
             val name = setupRepository.getName()
@@ -29,11 +32,15 @@ class SettingsViewModel @Inject constructor(
             val weight = setupRepository.getWeight()
             _weight.value = weight
         }
+        viewModelScope.launch {
+            val photo = setupRepository.getPhoto()
+            _photo.value = photo
+        }
     }
 
-    fun saveSetup(name: String, weight: Float) {
+    fun saveSetup(name: String, weight: Float, photo: String) {
         viewModelScope.launch {
-            setupRepository.updateSetup(name, weight)
+            setupRepository.updateSetup(name, weight, photo)
         }
     }
 }

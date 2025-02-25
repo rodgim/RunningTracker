@@ -24,9 +24,9 @@ class SetupViewModel @Inject constructor(
         }
     }
 
-    fun saveSetup(name: String, weight: Float, firstTimeToggle: Boolean) {
+    fun saveSetup(name: String, weight: Float, firstTimeToggle: Boolean, photo: String) {
         viewModelScope.launch {
-            setupRepository.saveSetup(name, weight, firstTimeToggle)
+            setupRepository.saveSetup(name, weight, firstTimeToggle, photo)
         }
     }
 }
