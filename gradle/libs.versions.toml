@@ -18,7 +18,7 @@ playServicesMapsVersion = "19.0.0"
 roomKtxVersion = "2.6.1"
 timberVersion = "5.0.1"
 
-androidGradlePlugin = "8.8.0"
+androidGradlePlugin = "8.8.1"
 devtoolsKspVersion = "2.0.0-1.0.24"
 kotlinVersion = "2.0.0"
 navigationSafeargsVersion = "2.8.5"
